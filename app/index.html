@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ELOHIM 777 PAD</title>
+<style>
+  :root { color-scheme: dark; --bg:#140e0c; --card:#241814; --ink:#f4eadf; --muted:#b7a394; --line:rgba(231,161,90,.28); --accent:#e7a15a; --hot:#f2d2a2; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 15px/1.45 "Segoe UI", sans-serif; }
+  button, select { font: inherit; color: inherit; background: #1a120f; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); color: #1a120e; border-color: transparent; font-weight: 650; }
+  header { display: flex; align-items: center; gap: 16px; padding: 16px 22px; border-bottom: 1px solid var(--line); }
+  h1 { font-family: Georgia, serif; font-weight: 500; font-size: 28px; margin: 0; letter-spacing: .04em; }
+  header p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  header .grow { flex: 1; }
+  .layout { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100% - 74px); }
+  aside { border-right: 1px solid var(--line); padding: 16px; }
+  main { padding: 16px 18px 28px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  h2 { font-family: Georgia, serif; font-size: 22px; font-weight: 500; margin: 0 0 8px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tabs button.on { background: var(--accent); color: #1a120e; border-color: transparent; }
+  .view { display: none; }
+  .view.on { display: block; }
+  .map { display: grid; grid-template-columns: 1fr 180px 140px; gap: 8px 10px; align-items: center; }
+  .map b { font-weight: 600; }
+  label.line { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  input[type="range"] { width: 180px; }
+  .device { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .pill { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #1a120e; background: var(--accent); border-radius: 99px; padding: 2px 7px; }
+  .pad { position: relative; height: 280px; border: 1px solid var(--line); border-radius: 140px; background: radial-gradient(circle at 50% 40%, #3a241c, #120c0a 70%); }
+  .key { position: absolute; min-width: 42px; text-align: center; border-radius: 8px; padding: 6px; border: 1px solid var(--line); background: #1a120f; font-size: 12px; }
+  .key.on { background: var(--hot); color: #1a120e; }
+  .touchbox { margin-top: 14px; position: relative; height: 120px; border: 1px solid var(--line); border-radius: 14px; background: #100c0a; }
+  .dot { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--accent); opacity: 0; }
+  .status { min-height: 1.4em; color: var(--hot); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>ELOHIM 777 PAD</h1>
+    <p id="adminLine">USB, Bluetooth, button map, touchpad mouse</p>
+  </div>
+  <div class="grow"></div>
+  <button id="elevate" type="button">Restart as administrator</button>
+</header>
+<div class="layout">
+  <aside>
+    <div class="card">
+      <h2>Connect</h2>
+      <p class="muted">A DualShock 4 works on a USB data cable, or over Bluetooth after Windows pairs it. Charge-only cables will not show the pad.</p>
+      <div class="row">
+        <button class="primary" id="connectSony" type="button">DualShock 4</button>
+        <button id="connectAny" type="button">Other HID pad</button>
+      </div>
+      <p class="status" id="linkStatus">No pad yet.</p>
+      <div id="liveDevices"></div>
+    </div>
+    <div class="card">
+      <h2>Bluetooth</h2>
+      <p class="muted">Hold Share and the PS button until the light bar flashes. Then pair “Wireless Controller” in Windows.</p>
+      <div class="row">
+        <button class="primary" id="openBt" type="button">Open Bluetooth</button>
+        <button id="refreshBt" type="button">Refresh</button>
+      </div>
+      <div id="btList" class="muted" style="margin-top:10px">Looking at the radio…</div>
+    </div>
+  </aside>
+  <main>
+    <div class="tabs">
+      <button class="on" type="button" data-view="map">Button map</button>
+      <button type="button" data-view="cursor">Cursor</button>
+      <button type="button" data-view="test">Test</button>
+    </div>
+    <section class="view on" id="map">
+      <div class="card">
+        <h2>What each button does</h2>
+        <p class="muted">The desktop map uses the touchpad as the mouse. Change any button here. Keyboard choices wait for the next key you press.</p>
+        <div class="row"><button id="resetMap" type="button">Reset to desktop map</button></div>
+        <div class="map" id="mapGrid" style="margin-top:14px"></div>
+      </div>
+    </section>
+    <section class="view" id="cursor">
+      <div class="card">
+        <h2>Pointer</h2>
+        <label class="line">Touchpad moves the Windows pointer <input id="touchMouse" type="checkbox"></label>
+        <label class="line">Tap the touchpad to click <input id="tapClick" type="checkbox"></label>
+        <label class="line">Left stick moves the pointer <input id="stickMouse" type="checkbox"></label>
+        <label class="line">Touchpad speed <input id="sensitivity" type="range" min="0.3" max="2.2" step="0.05"></label>
+        <label class="line">Stick speed <input id="stickSpeed" type="range" min="6" max="40" step="1"></label>
+        <label class="line">Stick deadzone <input id="deadzone" type="range" min="0.05" max="0.45" step="0.01"></label>
+        <p class="muted">The DualShock 4 touchpad is read from the pad itself. Xbox and other pads do not have that touchpad, so turn on the left stick if you want them to move the pointer. Pressing the touchpad is a normal button in the map.</p>
+      </div>
+    </section>
+    <section class="view" id="test">
+      <div class="card">
+        <h2>Live pad</h2>
+        <p class="status" id="testStatus">Waiting for a pad.</p>
+        <div class="pad" id="face">
+          <span class="key" data-k="triangle" style="left:73%; top:18%">△</span>
+          <span class="key" data-k="circle" style="left:84%; top:34%">○</span>
+          <span class="key" data-k="cross" style="left:73%; top:50%">✕</span>
+          <span class="key" data-k="square" style="left:62%; top:34%">□</span>
+          <span class="key" data-k="up" style="left:18%; top:22%">Up</span>
+          <span class="key" data-k="left" style="left:8%; top:36%">Left</span>
+          <span class="key" data-k="right" style="left:30%; top:36%">Right</span>
+          <span class="key" data-k="down" style="left:16%; top:50%">Down</span>
+          <span class="key" data-k="l1" style="left:8%; top:8%">L1</span>
+          <span class="key" data-k="r1" style="left:78%; top:8%">R1</span>
+          <span class="key" data-k="l2" style="left:8%; top:78%">L2</span>
+          <span class="key" data-k="r2" style="left:78%; top:78%">R2</span>
+          <span class="key" data-k="share" style="left:30%; top:70%">Share</span>
+          <span class="key" data-k="options" style="left:52%; top:70%">Options</span>
+          <span class="key" data-k="ps" style="left:42%; top:78%">PS</span>
+          <span class="key" data-k="touch" style="left:40%; top:58%">Touch</span>
+        </div>
+        <div class="touchbox" id="touchbox"><div class="dot" id="dot"></div></div>
+        <p class="muted" id="stickRead">Sticks 0, 0</p>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+(function () {
+  var BUTTONS = [
+    ["cross", "Cross"], ["circle", "Circle"], ["square", "Square"], ["triangle", "Triangle"],
+    ["up", "D-pad up"], ["down", "D-pad down"], ["left", "D-pad left"], ["right", "D-pad right"],
+    ["l1", "L1"], ["r1", "R1"], ["l2", "L2"], ["r2", "R2"],
+    ["l3", "Left stick click"], ["r3", "Right stick click"],
+    ["share", "Share"], ["options", "Options"], ["ps", "PS"], ["touch", "Touchpad click"]
+  ];
+  var ACTIONS = [
+    ["none", "Nothing"],
+    ["mouse-left", "Left click"],
+    ["mouse-right", "Right click"],
+    ["mouse-middle", "Middle click"],
+    ["scroll-up", "Scroll up"],
+    ["scroll-down", "Scroll down"],
+    ["key", "Keyboard key"]
+  ];
+  var profile = null;
+  var listening = "";
+  var hidFrame = null;
+  var hidSeen = 0;
+  var sentIdle = false;
+
+  function $(id) { return document.getElementById(id); }
+  function blank() {
+    var out = {};
+    BUTTONS.forEach(function (pair) { out[pair[0]] = false; });
+    return out;
+  }
+  function actionValue(action) {
+    if (!action || action.type === "none") return "none";
+    if (action.type === "mouse") return "mouse-" + (action.button || "left");
+    if (action.type === "scroll") return action.dir < 0 ? "scroll-up" : "scroll-down";
+    if (action.type === "key") return "key";
+    return "none";
+  }
+  function actionFrom(value, prev) {
+    if (value === "mouse-left") return { type: "mouse", button: "left" };
+    if (value === "mouse-right") return { type: "mouse", button: "right" };
+    if (value === "mouse-middle") return { type: "mouse", button: "middle" };
+    if (value === "scroll-up") return { type: "scroll", dir: -1 };
+    if (value === "scroll-down") return { type: "scroll", dir: 1 };
+    if (value === "key") return { type: "key", code: (prev && prev.code) || "Space" };
+    return { type: "none" };
+  }
+  function save() {
+    window.pad.saveProfile(profile);
+    drawMap();
+    drawCursor();
+  }
+  function drawMap() {
+    var host = $("mapGrid");
+    host.innerHTML = "";
+    BUTTONS.forEach(function (pair) {
+      var name = pair[0];
+      var action = profile.map[name] || { type: "none" };
+      var label = document.createElement("b");
+      label.textContent = pair[1];
+      var select = document.createElement("select");
+      ACTIONS.forEach(function (item) {
+        var option = document.createElement("option");
+        option.value = item[0];
+        option.textContent = item[1];
+        select.appendChild(option);
+      });
+      select.value = actionValue(action);
+      select.onchange = function () {
+        profile.map[name] = actionFrom(select.value, profile.map[name]);
+        save();
+      };
+      var key = document.createElement("button");
+      key.type = "button";
+      key.textContent = action.type === "key" ? (listening === name ? "Press a key" : action.code) : "—";
+      key.disabled = action.type !== "key";
+      key.onclick = function () { listening = name; drawMap(); };
+      host.appendChild(label);
+      host.appendChild(select);
+      host.appendChild(key);
+    });
+  }
+  function drawCursor() {
+    $("touchMouse").checked = !!profile.touchMouse;
+    $("tapClick").checked = !!profile.tapClick;
+    $("stickMouse").checked = !!profile.stickMouse;
+    $("sensitivity").value = profile.sensitivity;
+    $("stickSpeed").value = profile.stickSpeed;
+    $("deadzone").value = profile.deadzone;
+  }
+  function parseDS4(reportId, bytes) {
+    var offset = reportId === 0x11 ? 2 : 0;
+    if (bytes.length < offset + 38) return null;
+    var face = bytes[offset + 4];
+    var shoulders = bytes[offset + 5];
+    var system = bytes[offset + 6];
+    var hat = face & 0x0f;
+    var buttons = blank();
+    buttons.square = !!(face & 0x10);
+    buttons.cross = !!(face & 0x20);
+    buttons.circle = !!(face & 0x40);
+    buttons.triangle = !!(face & 0x80);
+    buttons.l1 = !!(shoulders & 0x01);
+    buttons.r1 = !!(shoulders & 0x02);
+    buttons.l2 = !!(shoulders & 0x04) || bytes[offset + 7] > 20;
+    buttons.r2 = !!(shoulders & 0x08) || bytes[offset + 8] > 20;
+    buttons.share = !!(shoulders & 0x10);
+    buttons.options = !!(shoulders & 0x20);
+    buttons.l3 = !!(shoulders & 0x40);
+    buttons.r3 = !!(shoulders & 0x80);
+    buttons.ps = !!(system & 0x01);
+    buttons.touch = !!(system & 0x02);
+    var hats = { 0: ["up"], 1: ["up", "right"], 2: ["right"], 3: ["down", "right"], 4: ["down"], 5: ["down", "left"], 6: ["left"], 7: ["up", "left"] };
+    (hats[hat] || []).forEach(function (name) { buttons[name] = true; });
+    var contact = bytes[offset + 34];
+    var mix = bytes[offset + 36];
+    var axis = function (value) { return (value - 128) / 128; };
+    return {
+      source: "hid",
+      name: "DualShock 4",
+      transport: reportId === 0x11 ? "Bluetooth packet" : "Direct packet",
+      buttons: buttons,
+      sticks: {
+        lx: axis(bytes[offset]),
+        ly: axis(bytes[offset + 1]),
+        rx: axis(bytes[offset + 2]),
+        ry: axis(bytes[offset + 3])
+      },
+      touch: {
+        active: (contact & 0x80) === 0,
+        x: ((mix & 0x0f) << 8) | bytes[offset + 35],
+        y: (bytes[offset + 37] << 4) | (mix >> 4)
+      }
+    };
+  }
+  function gamepadFrame(pad) {
+    var buttons = blank();
+    var names = ["cross", "circle", "square", "triangle", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "ps", "touch"];
+    names.forEach(function (name, index) {
+      buttons[name] = !!(pad.buttons[index] && pad.buttons[index].pressed);
+    });
+    return {
+      source: "gamepad",
+      name: pad.id || "Controller",
+      transport: "Windows gamepad",
+      buttons: buttons,
+      sticks: { lx: pad.axes[0] || 0, ly: pad.axes[1] || 0, rx: pad.axes[2] || 0, ry: pad.axes[3] || 0 },
+      touch: null
+    };
+  }
+  async function openHid(device) {
+    if (!device.opened) await device.open();
+    device.oninputreport = function (event) {
+      if (device.vendorId !== 0x054c || device.productId === 0x0ce6) return;
+      var view = event.data;
+      var bytes = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+      var parsed = parseDS4(event.reportId, bytes);
+      if (!parsed) return;
+      parsed.name = device.productName || "DualShock 4";
+      hidFrame = parsed;
+      hidSeen = Date.now();
+    };
+  }
+  async function connect(filters) {
+    var list = await navigator.hid.requestDevice({ filters: filters });
+    for (var i = 0; i < list.length; i++) await openHid(list[i]);
+    await refreshLive();
+  }
+  function currentFrame() {
+    if (hidFrame && Date.now() - hidSeen < 500) return hidFrame;
+    var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (var i = 0; i < pads.length; i++) if (pads[i]) return gamepadFrame(pads[i]);
+    return null;
+  }
+  function drawLive(frame) {
+    var keys = document.querySelectorAll(".key");
+    for (var i = 0; i < keys.length; i++) {
+      var name = keys[i].getAttribute("data-k");
+      keys[i].classList.toggle("on", !!(frame && frame.buttons && frame.buttons[name]));
+    }
+    var dot = $("dot");
+    if (frame && frame.touch && frame.touch.active) {
+      dot.style.opacity = "1";
+      dot.style.left = Math.max(0, Math.min(100, frame.touch.x / 1920 * 100)) + "%";
+      dot.style.top = Math.max(0, Math.min(100, frame.touch.y / 942 * 100)) + "%";
+    } else dot.style.opacity = "0";
+    if (!frame) {
+      $("linkStatus").textContent = "No pad yet.";
+      $("testStatus").textContent = "Waiting for a pad.";
+      $("stickRead").textContent = "Sticks 0, 0";
+      return;
+    }
+    var line = frame.name + " · " + frame.transport;
+    $("linkStatus").textContent = line;
+    $("testStatus").textContent = line + (frame.touch ? " · touchpad is live" : " · buttons and stick only");
+    var stick = frame.sticks || { lx: 0, ly: 0 };
+    $("stickRead").textContent = "Left stick " + stick.lx.toFixed(2) + ", " + stick.ly.toFixed(2);
+  }
+  function tick() {
+    var frame = currentFrame();
+    drawLive(frame);
+    if (frame) {
+      window.pad.sendFrame(frame);
+      sentIdle = false;
+    } else if (!sentIdle) {
+      window.pad.sendFrame({ buttons: blank(), sticks: { lx: 0, ly: 0, rx: 0, ry: 0 }, touch: { active: false, x: 0, y: 0 } });
+      sentIdle = true;
+    }
+    requestAnimationFrame(tick);
+  }
+  function linkOf(id) {
+    id = String(id || "");
+    if (/BTH|Bluetooth/i.test(id)) return "Bluetooth";
+    if (/USB/i.test(id)) return "USB";
+    return "Connected";
+  }
+  async function refreshLive() {
+    var host = $("liveDevices");
+    host.innerHTML = "";
+    if (!navigator.hid) {
+      host.innerHTML = "<p class='muted'>This window cannot see HID pads.</p>";
+      return;
+    }
+    var devices = await navigator.hid.getDevices();
+    if (!devices.length) {
+      host.innerHTML = "<p class='muted'>Nothing granted yet. Use DualShock 4 or Other HID pad.</p>";
+      return;
+    }
+    devices.forEach(function (device) {
+      var row = document.createElement("div");
+      row.className = "device";
+      row.innerHTML = "<span>" + (device.productName || "Controller") + "</span><span class='pill'>" + (device.opened ? "Open" : "Allowed") + "</span>";
+      host.appendChild(row);
+    });
+  }
+  async function refreshBluetooth() {
+    var data = await window.pad.bluetooth();
+    var host = $("btList");
+    var radios = data.radio || [];
+    var pads = data.pads || [];
+    if (!radios.length && !pads.length) {
+      host.textContent = data.note || "No Bluetooth radio or pad was listed. Turn Bluetooth on, then refresh.";
+      return;
+    }
+    host.innerHTML = "";
+    radios.slice(0, 4).forEach(function (radio) {
+      var row = document.createElement("div");
+      row.className = "device";
+      row.innerHTML = "<span>" + (radio.FriendlyName || "Bluetooth") + "</span><span class='pill'>" + (radio.Status || "") + "</span>";
+      host.appendChild(row);
+    });
+    pads.forEach(function (pad) {
+      var row = document.createElement("div");
+      row.className = "device";
+      row.innerHTML = "<span>" + (pad.FriendlyName || "Controller") + "</span><span class='pill'>" + linkOf(pad.InstanceId) + "</span>";
+      host.appendChild(row);
+    });
+  }
+
+  document.querySelector(".tabs").onclick = function (event) {
+    var button = event.target.closest ? event.target.closest("button") : null;
+    if (!button) return;
+    var name = button.getAttribute("data-view");
+    document.querySelectorAll(".tabs button").forEach(function (item) { item.classList.toggle("on", item === button); });
+    document.querySelectorAll(".view").forEach(function (view) { view.classList.toggle("on", view.id === name); });
+  };
+  $("connectSony").onclick = function () {
+    connect([
+      { vendorId: 0x054c, productId: 0x05c4 },
+      { vendorId: 0x054c, productId: 0x09cc },
+      { vendorId: 0x054c, productId: 0x0ba0 }
+    ]).catch(function (error) { $("linkStatus").textContent = error.message || "The pad was not granted."; });
+  };
+  $("connectAny").onclick = function () {
+    connect([{ usagePage: 0x01, usage: 0x05 }]).catch(function (error) { $("linkStatus").textContent = error.message || "No HID pad was granted."; });
+  };
+  $("openBt").onclick = function () { window.pad.openBluetooth(); };
+  $("refreshBt").onclick = refreshBluetooth;
+  $("elevate").onclick = function () { window.pad.elevate(); };
+  window.pad.getProfile().then(function (loaded) {
+    profile = loaded;
+    drawMap();
+    drawCursor();
+    ["touchMouse", "tapClick", "stickMouse"].forEach(function (id) {
+      $(id).onchange = function () { profile[id] = $(id).checked; save(); };
+    });
+    ["sensitivity", "stickSpeed", "deadzone"].forEach(function (id) {
+      $(id).oninput = function () { profile[id] = Number($(id).value); save(); };
+    });
+    $("resetMap").onclick = function () {
+      window.pad.saveProfile({
+        touchMouse: profile.touchMouse,
+        tapClick: profile.tapClick,
+        stickMouse: profile.stickMouse,
+        sensitivity: profile.sensitivity,
+        stickSpeed: profile.stickSpeed,
+        deadzone: profile.deadzone,
+        map: {}
+      }).then(function (next) {
+        profile = next;
+        drawMap();
+        drawCursor();
+      });
+    };
+  });
+  window.addEventListener("keydown", function (event) {
+    if (!listening || !profile) return;
+    event.preventDefault();
+    profile.map[listening] = { type: "key", code: event.code };
+    listening = "";
+    save();
+  });
+  window.pad.isAdmin().then(function (admin) {
+    $("adminLine").textContent = admin ? "Running as administrator" : "USB, Bluetooth, button map, touchpad mouse";
+    $("elevate").style.display = admin ? "none" : "inline-block";
+  });
+  navigator.hid.getDevices().then(function (devices) {
+    return Promise.all(devices.map(openHid));
+  }).then(refreshLive).catch(refreshLive);
+  refreshBluetooth();
+  setInterval(refreshBluetooth, 5000);
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

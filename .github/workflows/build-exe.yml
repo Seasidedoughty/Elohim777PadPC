@@ -1,0 +1,43 @@
+name: Build Windows installer
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install
+        run: npm install
+
+      - name: Build installer
+        run: npx electron-builder --win nsis --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Collect installer
+        shell: bash
+        run: cp dist/Elohim777-Pad-Setup.exe ./Elohim777-Pad-Setup.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elohim777-pad-setup
+          path: Elohim777-Pad-Setup.exe
+
+      - name: Publish release with the installer
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: ELOHIM 777 PAD for Windows ${{ github.run_number }}
+          files: Elohim777-Pad-Setup.exe

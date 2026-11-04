@@ -1,0 +1,43 @@
+{
+  "name": "elohim777-pad",
+  "productName": "ELOHIM 777 PAD",
+  "version": "1.0.0",
+  "description": "Connect a PS4 pad or other controller over USB or Bluetooth and use it on Windows.",
+  "main": "electron/main.js",
+  "author": "Elohim 777",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "koffi": "2.9.0"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.elohim777.pad",
+    "productName": "ELOHIM 777 PAD",
+    "directories": { "output": "dist" },
+    "files": ["electron/**/*", "app/**/*", "package.json"],
+    "asar": true,
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.ico",
+      "requestedExecutionLevel": "highestAvailable"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ELOHIM 777 PAD",
+      "artifactName": "Elohim777-Pad-Setup.${ext}"
+    }
+  }
+}
